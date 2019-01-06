@@ -7,6 +7,7 @@ import Task from 'components/Task';
 // Instruments
 import Styles from './styles.m.css';
 import { api } from '../../REST'; // ! Импорт модуля API должен иметь именно такой вид (import { api } from '../../REST')
+import Checkbox from 'theme/assets/Checkbox';
 
 export default class Scheduler extends Component {
 
@@ -48,8 +49,13 @@ export default class Scheduler extends Component {
         }
     };
 
+    _completeTask = () => {
+        console.log('_completeTask');
+    };
+
     render () {
         const { comment } = this.state;
+        const completed = '';
 
         return (
             <section className = { Styles.scheduler }>
@@ -78,7 +84,14 @@ export default class Scheduler extends Component {
                     </section>
 
                     <footer>
-                        <div />
+                        <Checkbox
+                            inlineBlock
+                            checked = { completed }
+                            className = { Styles.toggleTaskCompletedState }
+                            color1 = '#3b8EF3'
+                            color2 = '#FFF'
+                            onClick = { this._completeTask }
+                        />
 
                         <span className = { Styles.completeAllTasks } >Все задачи выполнены</span>
                     </footer>
