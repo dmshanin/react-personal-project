@@ -50,6 +50,10 @@
         & .updateTaskMessageOnClick {
             margin-right: 20px;
         }
+
+        .removeTask {
+
+        }
     }
 
     @media (width <= 740px) {

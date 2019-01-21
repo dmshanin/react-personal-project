@@ -6,37 +6,104 @@ import Task from 'components/Task';
 
 // Instruments
 import Styles from './styles.m.css';
-import { api } from '../../REST'; // ! Импорт модуля API должен иметь именно такой вид (import { api } from '../../REST')
+import { api, MAIN_URL, TOKEN } from '../../REST'; // ! Импорт модуля API должен иметь именно такой вид (import { api } from '../../REST')
 import Checkbox from 'theme/assets/Checkbox';
 
 export default class Scheduler extends Component {
 
     state = {
-        comment: '',
+        newTaskMessage: '',
+
+        //
+        tasks:           [],
+        isTasksFetching: false,
+
+        //
+        tasksFilter: '',
     };
 
-    _updateComment = (event) => {
+    componentDidMount () {
+        this._fetchTasksAsync();
+    }
+
+    _setTasksFetchingState = (state) => {
         this.setState({
-            comment: event.target.value,
+            isTasksFetching: state,
+        });
+    };
+
+    _fetchTasksAsync = async () => {
+        this._setTasksFetchingState(true);
+
+        const tasks = await api.fetchTasks();
+
+        this.setState({
+            tasks,
+            isTasksFetching: false,
+        });
+    };
+
+    _createTaskAsync = async (message) => {
+        this._setTasksFetchingState(true);
+
+        const task = await api.createTask(message);
+
+        this.setState(({ tasks }) => ({
+            tasks:           [task, ...tasks],
+            isTasksFetching: false,
+        }));
+    };
+
+    _updateTaskAsync = async (updatedTask) => {
+        this._setTasksFetchingState(true);
+
+        const _updatedTask = await api.updateTask(updatedTask);
+
+        this.setState(({ tasks }) => ({
+            tasks:           _updatedTask, // здесь надо както фильтровать
+            isTasksFetching: false,
+        }));
+
+        this._setTasksFetchingState(false);
+    };
+
+    _removeTaskAsync = async (id) => {
+        this._setTasksFetchingState(true);
+
+        await api.removeTask(id);
+
+        this.setState(({ tasks }) => ({
+            tasks:           tasks.filter((task) => task.id !== id),
+            isTasksFetching: false,
+        }));
+    };
+
+    _completeAllTasksAsync = async () => {
+        await api.completeAllTasks();
+    };
+
+    _updateNewTaskMessage = (event) => {
+        this.setState({
+            newTaskMessage: event.target.value,
         });
     };
 
     _handleFormSubmit = (event) => {
         event.preventDefault();
-        this._submitComment();
+        this._submitMessage();
     };
 
-    _submitComment = () => {
-        const { comment } = this.state;
+    _submitMessage = () => {
+        const { newTaskMessage } = this.state;
 
-        if (!comment) {
+        if (!newTaskMessage) {
             return null;
         }
 
-        // тут метод создания задачи
+        this._createTaskAsync(newTaskMessage);
 
         this.setState({
-            comment: '',
+            newTaskMessage: '',
         });
     };
 
@@ -45,20 +112,39 @@ export default class Scheduler extends Component {
 
         if (enterKey) {
             event.preventDefault();
-            this._submitComment();
+            this._submitMessage();
         }
     };
 
-    _completeTask = () => {
-        console.log('_completeTask');
+    // поиск
+    _updateTasksFilter = () => {
+        console.log('_updateTasksFilter');
+    };
+
+    //
+    _getAllCompleted = () => {
+        console.log('_getAllCompleted');
     };
 
     render () {
-        const { comment } = this.state;
+        const { newTaskMessage, tasks, isTasksFetching } = this.state;
         const completed = '';
+
+        const tasksJSX = tasks.map((task) =>
+            (<Task
+                _removeTaskAsync = { this._removeTaskAsync }
+                _updateTaskAsync = { this._updateTaskAsync }
+                completed = { task.completed }
+                favorite = { task.favorite }
+                id = { task.id }
+                key = { task.id }
+                message = { task.message }
+            />)
+        );
 
         return (
             <section className = { Styles.scheduler }>
+                { /* тут должен быть Spinner, смотри в снэпшот */ }
                 <main>
                     <header>
                         <h1>Планировщик задач</h1>
@@ -68,29 +154,29 @@ export default class Scheduler extends Component {
                     <section>
                         <form onSubmit = { this._handleFormSubmit }>
                             <input
-                                maxLength = '50'
+                                className = { Styles.createTask }
+                                maxLength = { 50 }
+                                onChange = { this._updateNewTaskMessage }
                                 placeholder = 'Описание моей новой задачи'
                                 type = 'text'
-                                value = { comment }
-                                onChange = { this._updateComment }
-                                onKeyPress = { this._submitOnEnter }
+                                value = { newTaskMessage }
                             />
-                            <button onClick = { this._submitComment() }>Добавить задачу</button>
+                            <button>Добавить задачу</button>
                         </form>
 
-                        <ul>
-                            <Task />
-                        </ul>
+                        <div className = { Styles.overlay } >
+                            <ul>
+                                { tasksJSX }
+                            </ul>
+                        </div>
                     </section>
 
                     <footer>
                         <Checkbox
-                            inlineBlock
                             checked = { completed }
-                            className = { Styles.toggleTaskCompletedState }
                             color1 = '#3b8EF3'
                             color2 = '#FFF'
-                            onClick = { this._completeTask }
+                            onClick = { this._getAllCompleted }
                         />
 
                         <span className = { Styles.completeAllTasks } >Все задачи выполнены</span>

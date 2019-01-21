@@ -67,6 +67,10 @@
             }
         }
 
+        & .createTask {
+
+        }
+
         & section {
             margin-bottom: 31px;
 
@@ -100,6 +104,10 @@
                         background-color: var(--paletteColor11);
                     }
                 }
+            }
+
+            & .overlay {
+
             }
 
             & ul {
