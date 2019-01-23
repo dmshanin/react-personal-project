@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 
 // Components
 import Task from 'components/Task';
+import Spinner from 'components/Spinner';
 
 // Instruments
 import Styles from './styles.m.css';
@@ -135,7 +136,7 @@ export default class Scheduler extends Component {
     };
 
     render () {
-        const { newTaskMessage, tasks } = this.state;
+        const { newTaskMessage, tasks, isTasksFetching } = this.state;
 
         const tasksJSX = tasks.map((task) => {
             return (<Task
@@ -154,7 +155,7 @@ export default class Scheduler extends Component {
 
         return (
             <section className = { Styles.scheduler }>
-                {/* тут должен быть Spinner, смотри в снэпшот */}
+                <Spinner isSpinning = { isTasksFetching } />
                 <main>
                     <header>
                         <h1>Планировщик задач</h1>
