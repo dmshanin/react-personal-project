@@ -116,27 +116,16 @@ export default class Scheduler extends Component {
         });
     };
 
-    _submitOnEnter = (event) => {
-        const enterKey = event.key === 'Enter';
-
-        if (enterKey) {
-            event.preventDefault();
-            this._submitMessage();
-        }
-    };
-
-    // поиск
     _updateTasksFilter = () => {
         console.log('_updateTasksFilter');
     };
 
-    //
     _getAllCompleted = () => {
-        console.log('_getAllCompleted');
+        this._completeAllTasksAsync();
     };
 
     render () {
-        const { newTaskMessage, tasks, isTasksFetching } = this.state;
+        const { newTaskMessage, tasks, isTasksFetching, tasksFilter } = this.state;
 
         const tasksJSX = tasks.map((task) => {
             return (<Task
@@ -159,7 +148,12 @@ export default class Scheduler extends Component {
                 <main>
                     <header>
                         <h1>Планировщик задач</h1>
-                        <input placeholder = 'Поиск' type = 'search' />
+                        <input
+                            placeholder = 'Поиск'
+                            type = 'search'
+                            value = { tasksFilter }
+                            onChange = { this._updateTasksFilter }
+                        />
                     </header>
 
                     <section>
