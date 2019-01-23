@@ -7,7 +7,7 @@ import Spinner from 'components/Spinner';
 
 // Instruments
 import Styles from './styles.m.css';
-import { api, MAIN_URL, TOKEN } from '../../REST'; // ! Импорт модуля API должен иметь именно такой вид (import { api } from '../../REST')
+import { api } from '../../REST'; // ! Импорт модуля API должен иметь именно такой вид (import { api } from '../../REST')
 import Checkbox from 'theme/assets/Checkbox';
 
 export default class Scheduler extends Component {
@@ -27,9 +27,9 @@ export default class Scheduler extends Component {
         this._fetchTasksAsync();
     }
 
-    _setTasksFetchingState = (state) => {
+    _setTasksFetchingState = (isTasksFetching) => {
         this.setState({
-            isTasksFetching: state,
+            isTasksFetching,
         });
     };
 
@@ -88,7 +88,21 @@ export default class Scheduler extends Component {
     };
 
     _completeAllTasksAsync = async () => {
-        await api.completeAllTasks();
+        this._setTasksFetchingState(true);
+
+        const { tasks } = this.state;
+
+        const completedTasks = tasks.map((task) => ({
+            ...task,
+            completed: true,
+        }));
+
+        const _updatedTasks = await api.completeAllTasks(completedTasks);
+
+        this.setState({
+            tasks:           _updatedTasks,
+            isTasksFetching: false,
+        });
     };
 
     _updateNewTaskMessage = (event) => {
@@ -135,7 +149,6 @@ export default class Scheduler extends Component {
                 created = { task.created }
                 favorite = { task.favorite }
                 id = { task.id }
-                key = { task.id }
                 message = { task.message }
                 modified = { task.modified ? task.modified : task.created }
             />);
@@ -144,6 +157,7 @@ export default class Scheduler extends Component {
 
         return (
             <section className = { Styles.scheduler }>
+                { console.log('isTasksFetching', isTasksFetching) }
                 <Spinner isSpinning = { isTasksFetching } />
                 <main>
                     <header>
@@ -155,7 +169,6 @@ export default class Scheduler extends Component {
                             onChange = { this._updateTasksFilter }
                         />
                     </header>
-
                     <section>
                         <form onSubmit = { this._handleFormSubmit }>
                             <input
@@ -179,8 +192,8 @@ export default class Scheduler extends Component {
                     <footer>
                         <Checkbox
                             checked = { false }
-                            color1 = '#3b8EF3'
-                            color2 = '#FFF'
+                            color1 = '#363636'
+                            color2 = '#fff'
                             onClick = { this._getAllCompleted }
                         />
 

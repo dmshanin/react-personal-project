@@ -24,8 +24,8 @@ export default class Task extends PureComponent {
     taskInput = createRef();
 
     state = {
-        isTaskEditing:  false,
-        newMessage: this.props.message,
+        isTaskEditing: false,
+        newMessage:    this.props.message,
     };
 
     _getTaskShape = ({
@@ -147,7 +147,7 @@ export default class Task extends PureComponent {
                         inlineBlock
                         checked = { completed }
                         className = { Styles.toggleTaskCompletedState }
-                        color1 = '#3b8EF3'
+                        color1 = '#3B8EF3'
                         color2 = '#FFF'
                         onClick = { this._toggleTaskCompletedState }
                     />
@@ -167,7 +167,7 @@ export default class Task extends PureComponent {
                     <Star
                         checked = { favorite }
                         className = { Styles.toggleTaskFavoriteState }
-                        color1 = '#3b8EF3'
+                        color1 = '#3B8EF3'
                         color2 = '#000'
                         inlineBlock
                         onClick = { this._toggleTaskFavoriteState }
@@ -176,7 +176,7 @@ export default class Task extends PureComponent {
                     <Edit
                         checked = { false }
                         className = { Styles.updateTaskMessageOnClick }
-                        color1 = '#3b8EF3'
+                        color1 = '#3B8EF3'
                         color2 = '#000'
                         inlineBlock
                         onClick = { this._updateTaskMessageOnClick }
@@ -184,7 +184,7 @@ export default class Task extends PureComponent {
 
                     <Remove
                         className = { Styles.removeTask }
-                        color1 = '#3b8EF3'
+                        color1 = '#3B8EF3'
                         color2 = '#000'
                         inlineBlock
                         onClick = { this._removeTask }

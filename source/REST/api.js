@@ -54,7 +54,18 @@ export const api = {
         });
     },
 
-    completeAllTasks: async () => {
-        await this.updateTask();
+    completeAllTasks: async (updatedTask) => {
+        const response = await fetch(MAIN_URL, {
+            method:  'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization:  TOKEN,
+            },
+            body: JSON.stringify(updatedTask),
+        });
+
+        const { data: task } = await response.json();
+
+        return task;
     },
 };
