@@ -1,5 +1,5 @@
 // Core
-import React, { PureComponent } from 'react';
+import React, { PureComponent, createRef } from 'react';
 import { func, string, bool } from 'prop-types';
 
 // Instruments
@@ -21,6 +21,8 @@ export default class Task extends PureComponent {
         _updateTaskAsync: func.isRequired,
     };
 
+    taskInput = createRef();
+
     state = {
         isTaskEditing:  false,
         newTaskMessage: this.props.message,
@@ -38,12 +40,17 @@ export default class Task extends PureComponent {
         message,
     });
 
-    _setTaskEditingState = (state) => {
-        this.setState({
-            isTaskEditing: state,
-        });
-
-       // ???
+    _setTaskEditingState = (isTaskEditing) => {
+        this.setState(
+            {
+                isTaskEditing,
+            },
+            () => {
+                if (isTaskEditing) {
+                    this.taskInput.current.focus();
+                }
+            },
+        );
     };
 
     _updateNewTaskMessage = (event) => {
@@ -62,6 +69,7 @@ export default class Task extends PureComponent {
         }
 
         _updateTaskAsync(updatedTask);
+
         this._setTaskEditingState(false);
     };
 
@@ -100,20 +108,20 @@ export default class Task extends PureComponent {
         }
     };
 
-    _toggleTaskCompletedState = () => { // ???
-        const baseTaskModel = this._getTaskShape({
-            completed: !this.props.completed,
-        });
+    _toggleTaskCompletedState = () => {
+        const { _updateTaskAsync, completed } = this.props;
 
-        this.props._updateTaskAsync([baseTaskModel]);
+        const taskToUpdate = this._getTaskShape({ completed: !completed });
+
+        _updateTaskAsync(taskToUpdate);
     };
 
     _toggleTaskFavoriteState = () => {
-        const baseTaskModel = this._getTaskShape({
-            favorite: !this.props.favorite,
-        });
+        const { _updateTaskAsync, favorite } = this.props;
 
-        this.props._updateTaskAsync([baseTaskModel]);
+        const taskToUpdate = this._getTaskShape({ favorite: !favorite });
+
+        _updateTaskAsync(taskToUpdate);
     };
 
     _removeTask = () => {
@@ -148,6 +156,7 @@ export default class Task extends PureComponent {
                         onKeyDown = { this._updateTaskMessageOnKeyDown }
                         type = 'text'
                         value = { message }
+                        ref = { this.taskInput }
                     />
                 </div>
 

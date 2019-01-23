@@ -12,8 +12,6 @@ export const api = {
 
         const { data: tasks } = await response.json();
 
-        console.log('tasks', tasks);
-
         return tasks;
     },
 

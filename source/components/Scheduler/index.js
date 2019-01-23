@@ -57,10 +57,18 @@ export default class Scheduler extends Component {
     _updateTaskAsync = async (updatedTask) => {
         this._setTasksFetchingState(true);
 
-        const _updatedTask = await api.updateTask(updatedTask);
+        const _updatedTasks = await api.updateTask([updatedTask]);
 
         this.setState(({ tasks }) => ({
-            tasks:           _updatedTask, // здесь надо както фильтровать
+            tasks: tasks.map((task) => {
+                const _updatedTask = _updatedTasks.find(({ id }) => id === task.id);
+
+                if (_updatedTask) {
+                    return _updatedTask;
+                }
+
+                return task;
+            }),
             isTasksFetching: false,
         }));
 
@@ -127,24 +135,26 @@ export default class Scheduler extends Component {
     };
 
     render () {
-        const { newTaskMessage, tasks, isTasksFetching } = this.state;
-        const completed = '';
+        const { newTaskMessage, tasks } = this.state;
 
-        const tasksJSX = tasks.map((task) =>
-            (<Task
+        const tasksJSX = tasks.map((task) => {
+            return (<Task
                 _removeTaskAsync = { this._removeTaskAsync }
                 _updateTaskAsync = { this._updateTaskAsync }
                 completed = { task.completed }
+                created = { task.created }
                 favorite = { task.favorite }
                 id = { task.id }
                 key = { task.id }
                 message = { task.message }
-            />)
+                modified = { task.modified ? task.modified : task.created }
+            />);
+        }
         );
 
         return (
             <section className = { Styles.scheduler }>
-                { /* тут должен быть Spinner, смотри в снэпшот */ }
+                {/* тут должен быть Spinner, смотри в снэпшот */}
                 <main>
                     <header>
                         <h1>Планировщик задач</h1>
@@ -164,22 +174,22 @@ export default class Scheduler extends Component {
                             <button>Добавить задачу</button>
                         </form>
 
-                        <div className = { Styles.overlay } >
+                        <div className = { Styles.overlay }>
                             <ul>
-                                { tasksJSX }
+                                {tasksJSX}
                             </ul>
                         </div>
                     </section>
 
                     <footer>
                         <Checkbox
-                            checked = { completed }
+                            checked = { false }
                             color1 = '#3b8EF3'
                             color2 = '#FFF'
                             onClick = { this._getAllCompleted }
                         />
 
-                        <span className = { Styles.completeAllTasks } >Все задачи выполнены</span>
+                        <span className = { Styles.completeAllTasks }>Все задачи выполнены</span>
                     </footer>
                 </main>
             </section>
