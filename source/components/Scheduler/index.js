@@ -1,5 +1,6 @@
 // Core
 import React, { Component } from 'react';
+import FlipMovePropConverter from 'react-flip-move';
 
 // Components
 import Task from 'components/Task';
@@ -149,6 +150,7 @@ export default class Scheduler extends Component {
                 created = { task.created }
                 favorite = { task.favorite }
                 id = { task.id }
+                key = { task.id }
                 message = { task.message }
                 modified = { task.modified ? task.modified : task.created }
             />);
@@ -175,7 +177,7 @@ export default class Scheduler extends Component {
                                 className = { Styles.createTask }
                                 maxLength = { 50 }
                                 onChange = { this._updateNewTaskMessage }
-                                placeholder = 'Описание моей новой задачи'
+                                placeholder = 'Описaние моей новой задачи'
                                 type = 'text'
                                 value = { newTaskMessage }
                             />
@@ -184,7 +186,20 @@ export default class Scheduler extends Component {
 
                         <div className = { Styles.overlay }>
                             <ul>
-                                {tasksJSX}
+                                <FlipMovePropConverter
+                                    delay = { 0 }
+                                    disableAllAnimations = { false }
+                                    duration = { 400 }
+                                    easing = 'ease-in-out'
+                                    enterAnimation = 'elevator'
+                                    leaveAnimation = 'elevator'
+                                    maintainContainerHeight = { false }
+                                    staggerDelayBy = { 0 }
+                                    staggerDurationBy = { 0 }
+                                    typeName = 'div'
+                                    verticalAlignment = 'top'>
+                                    {tasksJSX}
+                                </FlipMovePropConverter>
                             </ul>
                         </div>
                     </section>
