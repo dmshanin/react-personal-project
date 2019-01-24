@@ -132,7 +132,11 @@ export default class Scheduler extends Component {
     };
 
     _updateTasksFilter = () => {
-        console.log('_updateTasksFilter');
+        this.setState(({ tasks }) => ({
+            tasksFilter:     event.target.value,
+            tasks:           tasks.filter((task) => task.message === event.target.value),
+            isTasksFetching: false,
+        }));
     };
 
     _getAllCompleted = () => {
@@ -160,6 +164,7 @@ export default class Scheduler extends Component {
         return (
             <section className = { Styles.scheduler }>
                 { console.log('isTasksFetching', isTasksFetching) }
+                { console.log('tasksFilter', tasksFilter) }
                 <Spinner isSpinning = { isTasksFetching } />
                 <main>
                     <header>
