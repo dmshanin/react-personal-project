@@ -50,14 +50,9 @@
         & .updateTaskMessageOnClick {
             margin-right: 20px;
         }
-
-        .removeTask {
-
-        }
     }
 
     @media (width <= 740px) {
-        flex-direction: column-reverse;
         padding: 10px 5px;
         height: auto;
 

@@ -1,108 +1,32 @@
 // Core
 import React, { Component } from 'react';
-import FlipMovePropConverter from 'react-flip-move';
-
-// Components
-import Task from 'components/Task';
-import Spinner from 'components/Spinner';
+import Move from 'react-flip-move';
 
 // Instruments
 import Styles from './styles.m.css';
+import Checkbox from '../../theme/assets/Checkbox';
 import { api } from '../../REST'; // ! Импорт модуля API должен иметь именно такой вид (import { api } from '../../REST')
-import Checkbox from 'theme/assets/Checkbox';
+import { sortTasksByGroup } from '../../instruments';
+
+// Components
+import Task from '../Task';
+import Spinner from '../Spinner';
 
 export default class Scheduler extends Component {
-
     state = {
-        newTaskMessage: '',
-
-        //
-        tasks:           [],
+        newTaskMessage:  '',
+        tasksFilter:     '',
         isTasksFetching: false,
-
-        //
-        tasksFilter: '',
+        tasks:           [],
     };
 
     componentDidMount () {
         this._fetchTasksAsync();
     }
 
-    _setTasksFetchingState = (isTasksFetching) => {
+    _updateTasksFilter = (event) => {
         this.setState({
-            isTasksFetching,
-        });
-    };
-
-    _fetchTasksAsync = async () => {
-        this._setTasksFetchingState(true);
-
-        const tasks = await api.fetchTasks();
-
-        this.setState({
-            tasks,
-            isTasksFetching: false,
-        });
-    };
-
-    _createTaskAsync = async (message) => {
-        this._setTasksFetchingState(true);
-
-        const task = await api.createTask(message);
-
-        this.setState(({ tasks }) => ({
-            tasks:           [task, ...tasks],
-            isTasksFetching: false,
-        }));
-    };
-
-    _updateTaskAsync = async (updatedTask) => {
-        this._setTasksFetchingState(true);
-
-        const _updatedTasks = await api.updateTask([updatedTask]);
-
-        this.setState(({ tasks }) => ({
-            tasks: tasks.map((task) => {
-                const _updatedTask = _updatedTasks.find(({ id }) => id === task.id);
-
-                if (_updatedTask) {
-                    return _updatedTask;
-                }
-
-                return task;
-            }),
-            isTasksFetching: false,
-        }));
-
-        this._setTasksFetchingState(false);
-    };
-
-    _removeTaskAsync = async (id) => {
-        this._setTasksFetchingState(true);
-
-        await api.removeTask(id);
-
-        this.setState(({ tasks }) => ({
-            tasks:           tasks.filter((task) => task.id !== id),
-            isTasksFetching: false,
-        }));
-    };
-
-    _completeAllTasksAsync = async () => {
-        this._setTasksFetchingState(true);
-
-        const { tasks } = this.state;
-
-        const completedTasks = tasks.map((task) => ({
-            ...task,
-            completed: true,
-        }));
-
-        const _updatedTasks = await api.completeAllTasks(completedTasks);
-
-        this.setState({
-            tasks:           _updatedTasks,
-            isTasksFetching: false,
+            tasksFilter: event.target.value.toLowerCase(),
         });
     };
 
@@ -112,59 +36,134 @@ export default class Scheduler extends Component {
         });
     };
 
-    _handleFormSubmit = (event) => {
-        event.preventDefault();
-        this._submitMessage();
-    };
+    _getAllCompleted = () => this.state.tasks.every((task) => task.completed);
 
-    _submitMessage = () => {
-        const { newTaskMessage } = this.state;
-
-        if (!newTaskMessage) {
-            return null;
-        }
-
-        this._createTaskAsync(newTaskMessage);
-
+    _setTasksFetchingState = (state) => {
         this.setState({
-            newTaskMessage: '',
+            isTasksFetching: state,
         });
     };
 
-    _updateTasksFilter = () => {
-        this.setState(({ tasks }) => ({
-            tasksFilter:     event.target.value,
-            tasks:           tasks.filter((task) => task.message === event.target.value),
-            isTasksFetching: false,
-        }));
+    _fetchTasksAsync = async () => {
+        try {
+            this._setTasksFetchingState(true);
+
+            const tasks = await api.fetchTasks();
+
+            this.setState({
+                tasks: sortTasksByGroup(tasks),
+            });
+        } catch (error) {
+            console.log(error.message);
+        } finally {
+            this._setTasksFetchingState(false);
+        }
     };
 
-    _getAllCompleted = () => {
-        this._completeAllTasksAsync();
+    _createTaskAsync = async (event) => {
+        try {
+            event.preventDefault();
+            const { newTaskMessage } = this.state;
+
+            if (!newTaskMessage) {
+                return null;
+            }
+
+            this._setTasksFetchingState(true);
+
+            const task = await api.createTask(newTaskMessage);
+
+            this.setState(({ tasks }) => ({
+                tasks:          sortTasksByGroup([task, ...tasks]),
+                newTaskMessage: '',
+            }));
+        } catch (error) {
+            console.log(error.message);
+        } finally {
+            this._setTasksFetchingState(false);
+        }
+    };
+
+    _updateTaskAsync = async (updatedTask) => {
+        try {
+            this._setTasksFetchingState(true);
+
+            const updatedTaskFromResponse = await api.updateTask(updatedTask);
+
+            this.setState(({ tasks }) => {
+                const indexToReplace = tasks.indexOf(tasks.find((task) => task.id === updatedTask.id));
+
+                const newTasks = [...tasks.filter((task) => task.id !== updatedTask.id)];
+
+                newTasks.splice(indexToReplace, 0, updatedTaskFromResponse);
+
+                const sortedTasks = sortTasksByGroup(newTasks);
+
+                return {
+                    tasks: sortedTasks,
+                };
+            });
+        } catch (error) {
+            console.log(error.message);
+        } finally {
+            this._setTasksFetchingState(false);
+        }
+    };
+
+    _removeTaskAsync = async (taskId) => {
+        try {
+            this._setTasksFetchingState(true);
+
+            await api.removeTask(taskId);
+
+            this.setState(({ tasks }) => ({
+                tasks:           tasks.filter((task) => task.id !== taskId),
+                isTasksFetching: false,
+            }));
+        } catch (error) {
+            console.log(error.message);
+        } finally {
+            this._setTasksFetchingState(false);
+        }
+    };
+
+    _completeAllTasksAsync = async () => {
+        try {
+            if (this._getAllCompleted()) {
+                return null;
+            }
+
+            this._setTasksFetchingState(true);
+
+            await api.completeAllTasks(this.state.tasks);
+
+            this.setState(({ tasks }) => ({
+                tasks: sortTasksByGroup(tasks.map((task) => ({ ...task, completed: true }))),
+            }));
+        } catch (error) {
+            console.log(error.message);
+        } finally {
+            this._setTasksFetchingState(false);
+        }
     };
 
     render () {
-        const { newTaskMessage, tasks, isTasksFetching, tasksFilter } = this.state;
+        const { tasks, newTaskMessage, tasksFilter, isTasksFetching } = this.state;
 
-        const tasksJSX = tasks.map((task) => {
-            return (<Task
-                _removeTaskAsync = { this._removeTaskAsync }
-                _updateTaskAsync = { this._updateTaskAsync }
-                completed = { task.completed }
-                created = { task.created }
-                favorite = { task.favorite }
-                id = { task.id }
-                key = { task.id }
-                message = { task.message }
-                modified = { task.modified ? task.modified : task.created }
-            />);
-        }
-        );
+        const allCompleted = this._getAllCompleted();
+        const todoList = tasks
+            .filter((task) => task.message.toLowerCase().includes(tasksFilter))
+            .map((props) => (
+                <Task
+                    _removeTaskAsync = { this._removeTaskAsync }
+                    _updateTaskAsync = { this._updateTaskAsync }
+                    key = { props.id }
+                    { ...props }
+                />
+            ));
 
         return (
             <section className = { Styles.scheduler }>
-                { console.log('isTasksFetching', isTasksFetching) }
-                { console.log('tasksFilter', tasksFilter) }
                 <Spinner isSpinning = { isTasksFetching } />
                 <main>
                     <header>
@@ -177,46 +176,32 @@ export default class Scheduler extends Component {
                         />
                     </header>
                     <section>
-                        <form onSubmit = { this._handleFormSubmit }>
+                        <form onSubmit = { this._createTaskAsync }>
                             <input
                                 className = { Styles.createTask }
                                 maxLength = { 50 }
-                                onChange = { this._updateNewTaskMessage }
                                 placeholder = 'Описaние моей новой задачи'
                                 type = 'text'
                                 value = { newTaskMessage }
+                                onChange = { this._updateNewTaskMessage }
                             />
                             <button>Добавить задачу</button>
                         </form>
-
                         <div className = { Styles.overlay }>
                             <ul>
-                                <FlipMovePropConverter
-                                    delay = { 0 }
-                                    disableAllAnimations = { false }
-                                    duration = { 400 }
-                                    easing = 'ease-in-out'
-                                    enterAnimation = 'elevator'
-                                    leaveAnimation = 'elevator'
-                                    maintainContainerHeight = { false }
-                                    staggerDelayBy = { 0 }
-                                    staggerDurationBy = { 0 }
-                                    typeName = 'div'
-                                    verticalAlignment = 'top'>
-                                    {tasksJSX}
-                                </FlipMovePropConverter>
+                                <Move duration = { 400 } easing = 'ease-in-out'>
+                                    {todoList}
+                                </Move>
                             </ul>
                         </div>
                     </section>
-
                     <footer>
                         <Checkbox
-                            checked = { false }
+                            checked = { allCompleted }
                             color1 = '#363636'
                             color2 = '#fff'
-                            onClick = { this._getAllCompleted }
+                            onClick = { this._completeAllTasksAsync }
                         />
-
                         <span className = { Styles.completeAllTasks }>Все задачи выполнены</span>
                     </footer>
                 </main>

@@ -1,71 +1,97 @@
+// Instruments
 import { MAIN_URL, TOKEN } from './config';
 
 export const api = {
-    fetchTasks: async () => {
+    async fetchTasks () {
         const response = await fetch(MAIN_URL, {
             method:  'GET',
             headers: {
-                'Content-Type': 'application/json',
-                Authorization:  TOKEN,
+                Authorization: TOKEN,
             },
         });
 
         const { data: tasks } = await response.json();
 
+        if (response.status !== 200) {
+            throw new Error('Tasks were not fetched.');
+        }
+
+        // console.log(await response.json());
+
         return tasks;
     },
-
-    createTask: async (message) => {
+    async createTask (newTaskMessage) {
         const response = await fetch(MAIN_URL, {
             method:  'POST',
             headers: {
-                'Content-Type': 'application/json',
                 Authorization:  TOKEN,
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({ message: newTaskMessage }),
         });
 
         const { data: task } = await response.json();
 
+        if (response.status !== 200) {
+            throw new Error('Task was not created.');
+        }
+
         return task;
     },
-
-    updateTask: async (updatedTask) => {
+    async updateTask (updatedTask) {
         const response = await fetch(MAIN_URL, {
             method:  'PUT',
             headers: {
-                'Content-Type': 'application/json',
                 Authorization:  TOKEN,
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(updatedTask),
+            body: JSON.stringify([updatedTask]),
         });
 
-        const { data: task } = await response.json();
+        const {
+            data: [updatedTaskFromResponse],
+        } = await response.json();
 
-        return task;
+        if (response.status !== 200) {
+            throw new Error('Task was not updated.');
+        }
+
+        return updatedTaskFromResponse;
     },
-
-    removeTask: async (postId) => {
-        await fetch(`${MAIN_URL}/${postId}`, {
+    async removeTask (taskId) {
+        const response = await fetch(`${MAIN_URL}/${taskId}`, {
             method:  'DELETE',
             headers: {
                 Authorization: TOKEN,
             },
         });
+
+        if (response.status !== 204) {
+            throw new Error('Task was not deleted.');
+        }
     },
+    async completeAllTasks (tasks) {
+        const promises = [];
 
-    completeAllTasks: async (updatedTask) => {
-        const response = await fetch(MAIN_URL, {
-            method:  'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization:  TOKEN,
-            },
-            body: JSON.stringify(updatedTask),
-        });
+        for (const task of tasks) {
+            promises.push(
+                fetch(MAIN_URL, {
+                    method:  'PUT',
+                    headers: {
+                        Authorization:  TOKEN,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify([{ ...task, completed: true }]),
+                }),
+            );
+        }
 
-        const { data: task } = await response.json();
+        const responses = await Promise.all(promises);
 
-        return task;
+        const success = responses.every((result) => result.status === 200);
+
+        if (!success) {
+            throw new Error('Tasks were not completed');
+        }
     },
 };
